@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LinkedIn Post Generator — AI Revolution</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:ital,wght@0,400;0,500;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+
+  <!-- Background grid -->
+  <div class="bg-grid"></div>
+  <div class="noise-overlay"></div>
+
+  <!-- Header -->
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="logo-group">
+        <span class="logo-icon">◈</span>
+        <span class="logo-text">PostForge<span class="logo-accent">AI</span></span>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-layout">
+
+    <!-- ── LEFT PANEL: Controls ── -->
+    <section class="panel panel-controls">
+      <div class="panel-label">01 / SOURCE</div>
+      <h2 class="panel-title">Find AI News</h2>
+
+      <!-- Source toggle -->
+      <div class="source-toggle" role="group" aria-label="Content source">
+        <button class="toggle-btn active" data-source="news" onclick="setSource('news', this)">
+          <span class="toggle-icon">📡</span> News
+        </button>
+        <button class="toggle-btn" data-source="github" onclick="setSource('github', this)">
+          <span class="toggle-icon">⭐</span> GitHub
+        </button>
+      </div>
+
+      <!-- Topic input -->
+      <div class="field-group">
+        <label class="field-label" for="topic">Search Topic</label>
+        <input
+          id="topic"
+          class="field-input"
+          type="text"
+          value="AI revolution artificial intelligence 2025"
+          placeholder="e.g. AI agents, LLM, machine learning..."
+        />
+      </div>
+
+      <!-- Result count -->
+      <div class="field-group">
+        <label class="field-label" for="num-results">
+          Number of Results <span class="field-hint" id="num-hint">10</span>
+        </label>
+        <input
+          id="num-results"
+          class="range-slider"
+          type="range"
+          min="3"
+          max="10"
+          value="10"
+          oninput="document.getElementById('num-hint').textContent = this.value"
+        />
+        <div class="range-labels"><span>3</span><span>10</span></div>
+      </div>
+
+      <button class="btn btn-primary" id="fetch-btn" onclick="fetchNews()">
+        <span class="btn-text">Fetch News</span>
+        <span class="btn-spinner hidden" id="fetch-spinner">⟳</span>
+      </button>
+
+      <!-- Divider -->
+      <div class="panel-divider">
+        <span>02 / GENERATION</span>
+      </div>
+
+      <!-- Preset selector -->
+      <div class="field-group">
+        <label class="field-label">Style Preset</label>
+        <div class="preset-grid" id="preset-grid">
+          <button class="preset-card" data-preset="professional" onclick="selectPreset('professional', this)">
+            <span class="preset-name">Professional</span>
+            <span class="preset-params">temp 0.3 · top-p 0.85</span>
+            <span class="preset-desc">Polished, corporate</span>
+          </button>
+          <button class="preset-card active" data-preset="conversational" onclick="selectPreset('conversational', this)">
+            <span class="preset-name">Conversational</span>
+            <span class="preset-params">temp 0.7 · top-p 0.90</span>
+            <span class="preset-desc">Friendly, relatable</span>
+          </button>
+          <button class="preset-card" data-preset="bold" onclick="selectPreset('bold', this)">
+            <span class="preset-name">Bold</span>
+            <span class="preset-params">temp 1.0 · top-p 0.95</span>
+            <span class="preset-desc">Opinionated, punchy</span>
+          </button>
+          <button class="preset-card" data-preset="creative" onclick="selectPreset('creative', this)">
+            <span class="preset-name">Creative</span>
+            <span class="preset-params">temp 1.3 · top-p 0.98</span>
+            <span class="preset-desc">Unique, unexpected</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Custom sliders -->
+      <details class="custom-params">
+        <summary class="custom-params-toggle">⚙ Custom Parameters</summary>
+        <div class="custom-params-body">
+          <div class="field-group">
+            <label class="field-label">
+              Temperature <span class="field-hint" id="temp-hint">0.70</span>
+            </label>
+            <input id="custom-temp" class="range-slider" type="range" min="0" max="2" step="0.05" value="0.70"
+              oninput="document.getElementById('temp-hint').textContent = parseFloat(this.value).toFixed(2)" />
+            <div class="range-labels"><span>0 (precise)</span><span>2.0 (wild)</span></div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">
+              Top-p <span class="field-hint" id="topp-hint">0.90</span>
+            </label>
+            <input id="custom-topp" class="range-slider" type="range" min="0.1" max="1" step="0.01" value="0.90"
+              oninput="document.getElementById('topp-hint').textContent = parseFloat(this.value).toFixed(2)" />
+            <div class="range-labels"><span>0.1 (focused)</span><span>1.0 (diverse)</span></div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">
+              Max Tokens <span class="field-hint" id="tokens-hint">500</span>
+            </label>
+            <input id="custom-tokens" class="range-slider" type="range" min="100" max="800" step="50" value="500"
+              oninput="document.getElementById('tokens-hint').textContent = this.value" />
+            <div class="range-labels"><span>100</span><span>800</span></div>
+          </div>
+          <div class="checkbox-row">
+            <label class="check-label"><input type="checkbox" id="use-custom" /> Use custom overrides</label>
+          </div>
+        </div>
+      </details>
+
+      <!-- Author + goal -->
+      <div class="field-group">
+        <label class="field-label" for="author-ctx">Author Context</label>
+        <input id="author-ctx" class="field-input" type="text"
+          value="an AI engineer sharing practitioner insights"
+          placeholder="who are you writing as?" />
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="post-goal">Post Goal</label>
+        <input id="post-goal" class="field-input" type="text"
+          value="educate and spark discussion"
+          placeholder="what should the post achieve?" />
+      </div>
+
+      <!-- Toggles -->
+      <div class="toggle-row">
+        <label class="check-label"><input type="checkbox" id="include-hashtags" checked /> Include Hashtags</label>
+        <label class="check-label"><input type="checkbox" id="include-cta" checked /> Include CTA Question</label>
+      </div>
+
+      <button class="btn btn-accent" id="generate-btn" onclick="generatePost()" disabled>
+        <span class="btn-text">Generate LinkedIn Post</span>
+        <span class="btn-spinner hidden" id="gen-spinner">⟳</span>
+      </button>
+    </section>
+
+    <!-- ── CENTER PANEL: Content Preview ── -->
+    <section class="panel panel-content">
+      <div class="panel-label">02 / AI NEWS FEED</div>
+      <h2 class="panel-title">Fetched Content</h2>
+
+      <div class="content-area" id="content-area">
+        <div class="empty-state">
+          <div class="empty-icon">◈</div>
+          <p>Fetch news or GitHub repos<br/>to see the raw AI content here.</p>
+        </div>
+      </div>
+
+      <div class="content-actions hidden" id="content-actions">
+        <button class="btn btn-ghost btn-sm" onclick="clearContent()">Clear</button>
+        <span class="word-count" id="word-count"></span>
+      </div>
+    </section>
+
+    <!-- ── RIGHT PANEL: Output ── -->
+    <section class="panel panel-output">
+      <div class="panel-label">03 / LINKEDIN POST</div>
+      <h2 class="panel-title">Generated Post</h2>
+
+      <!-- Config badge -->
+      <div class="config-badge hidden" id="config-badge"></div>
+
+      <div class="post-area" id="post-area">
+        <div class="empty-state">
+          <div class="empty-icon">✦</div>
+          <p>Your generated LinkedIn post<br/>will appear here.</p>
+        </div>
+      </div>
+
+      <div class="post-actions hidden" id="post-actions">
+        <button class="btn btn-ghost btn-sm" onclick="copyPost()">
+          <span id="copy-label">Copy Post</span>
+        </button>
+        <button class="btn btn-ghost btn-sm" onclick="regenerate()">Regenerate</button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Toast notification -->
+  <div class="toast hidden" id="toast"></div>
+
+  <script src="/static/js/main.js"></script>
+</body>
+</html>
